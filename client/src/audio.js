@@ -22,7 +22,7 @@ export class AudioEngine {
     } catch {}
     this.musicVol = s.music ?? 0.5;
     this.sfxVol = s.sfx ?? 0.8;
-    this.engineVol = s.engine ?? 0.5;
+    this.engineVol = s.engine ?? 0.4;
     this.engines = new Map();
     this.song = null;
     this.songTimer = null;
@@ -235,7 +235,7 @@ export class AudioEngine {
     e.o1.frequency.setTargetAtTime(f, t, 0.05);
     e.o2.frequency.setTargetAtTime(f * (vehicle === 'hover' ? 1.5 : 0.5), t, 0.05);
     e.f.frequency.setTargetAtTime(220 + speed * 14, t, 0.05);
-    e.g.gain.setTargetAtTime(vol * this.engineVol * (0.012 + Math.min(1, speed / 40) * 0.016), t, 0.08);
+    e.g.gain.setTargetAtTime(vol * this.engineVol * this.engineVol * (0.012 + Math.min(1, speed / 40) * 0.012), t, 0.08);
   }
 
   stopEngines() {

@@ -187,7 +187,7 @@ function sendFile(res, file) {
   const ext = path.extname(file);
   const headers = {
     'Content-Type': MIME[ext] || 'application/octet-stream',
-    'Cache-Control': 'no-cache',
+    'Cache-Control': /\.[0-9a-f]{8}\.(js|css)$/.test(file) ? 'public, max-age=31536000, immutable' : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'same-origin'
   };

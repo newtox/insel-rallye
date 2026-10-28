@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TRACKS, trackById, THEMES } from '../../shared/tracks.js';
-import { CHARACTERS, characterById, VEHICLES, DIFFICULTIES, BOT_NAMES, MAX_PLAYERS } from '../../shared/constants.js';
+import { CHARACTERS, characterById, VEHICLES, DIFFICULTIES, BOT_NAMES, MAX_PLAYERS, VERSION } from '../../shared/constants.js';
 import { formatTime } from '../../shared/math.js';
 import { getTrack } from '../../shared/trackgen.js';
 import { Game, preloadWorld } from './game.js';
@@ -893,6 +893,7 @@ function showSettings() {
     <div class="setting-row"><span>Grafik</span>${seg('quality', [['high', 'Schön'], ['low', 'Schnell']], settings.quality)}</div>
     <div class="setting-row"><span>Flugzeug-Höhe</span>${seg('invertPlane', [['false', 'Normal'], ['true', 'Umgedreht']], String(settings.invertPlane))}</div>
     <label class="field">Server-Adresse ${isServed() ? '<span class="muted">(leer = dieser Server)</span>' : ''}<input class="input" id="setServer" value="${esc(settings.server)}" placeholder="${isServed() ? esc(location.host) : '192.168.0.20:3000'}"></label>
+    <p class="muted">Version ${VERSION} · Build ${typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : 'dev'}</p>
     ${isServed() ? '<p class="muted">Kein Internet? <a href="offline.html" download>Offline-Version herunterladen</a> – eine einzelne Datei für Splitscreen ohne Server.</p>' : ''}`);
   $('#setName').addEventListener('change', (e) => {
     profile.name = e.target.value.trim().slice(0, 16);
