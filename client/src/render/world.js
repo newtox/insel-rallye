@@ -338,6 +338,35 @@ export function buildWorld(track) {
   arch.rotation.y = startYaw;
   group.add(arch);
 
+  const flagTex = makeTexture(32, 20, (x) => {
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 5; j++) {
+      x.fillStyle = (i + j) % 2 ? '#111' : '#fff';
+      x.fillRect(i * 4, j * 4, 4, 4);
+    }
+  }, false);
+  flagTex.magFilter = THREE.NearestFilter;
+  const flagMat = new THREE.MeshLambertMaterial({ map: flagTex, side: THREE.DoubleSide });
+  const poleGeo = new THREE.CylinderGeometry(0.16, 0.2, 7, 6);
+  const flagGeo = new THREE.PlaneGeometry(3, 1.9, 4, 1);
+  flagGeo.translate(1.5, 0, 0);
+  const flags = [];
+  for (const g of track.gates) {
+    if (g.k === 0) continue;
+    for (const side of [-1, 1]) {
+      const p = track.pointAt(g.i, side * (g.w + 4));
+      const pole = new THREE.Mesh(poleGeo, mat(0xffffff));
+      const gh = track.heightAt(p.x, p.z);
+      pole.position.set(p.x, gh + 3.5, p.z);
+      group.add(pole);
+      const flag = new THREE.Mesh(flagGeo, flagMat);
+      flag.position.set(p.x, gh + 6, p.z);
+      flag.rotation.y = g.yaw + (side > 0 ? 0 : Math.PI);
+      flag.userData.phase = g.k * 0.7 + side;
+      group.add(flag);
+      flags.push(flag);
+    }
+  }
+
   const padTex = makeTexture(64, 64, (x, w, h) => {
     x.fillStyle = '#ff8a00';
     x.fillRect(0, 0, w, h);
@@ -495,6 +524,7 @@ export function buildWorld(track) {
     }
     for (const m of coins.values()) if (m.visible) m.rotation.y = t * 3 + m.userData.phase;
     for (const r of rings) r.rotation.z = t * 0.6;
+    for (const f of flags) f.rotation.z = Math.sin(t * 4 + f.userData.phase) * 0.12;
     padTex.offset.y = -t * 1.5;
     clouds.rotation.y = t * 0.004;
     if (isLava) wmat.emissiveIntensity = 0.6 + Math.sin(t * 2) * 0.12;

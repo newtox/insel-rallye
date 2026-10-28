@@ -1,8 +1,7 @@
 import { clamp, lerp, wrapAngle } from './math.js';
-import { VEHICLES, characterById, GRAVITY, MAX_COINS, SECTORS } from './constants.js';
+import { VEHICLES, characterById, GRAVITY, MAX_COINS } from './constants.js';
 
-export const EV = { LAP: 1, PAD: 2, RING: 4, LAND: 8, RESPAWN: 16, MINIBOOST: 32, WALL: 64, SPLASH: 128, FALL: 256, BURN: 512 };
-const FULL = (1 << SECTORS) - 1;
+export const EV = { LAP: 1, PAD: 2, RING: 4, LAND: 8, RESPAWN: 16, MINIBOOST: 32, WALL: 64, SPLASH: 128, FALL: 256, BURN: 512, GATE: 1024, MISSED: 2048, OFFTRACK: 4096 };
 
 export function createKart({ id, vehicle = 'car', character = 'ruffy', track, slot = 0 }) {
   const sp = track.spawnSlot(slot);
@@ -11,7 +10,7 @@ export function createKart({ id, vehicle = 'car', character = 'ruffy', track, sl
     id, vehicle: VEHICLES[vehicle] ? vehicle : 'car', character: ch.id, stats: ch.stats,
     x: sp.x, y: sp.y, z: sp.z, vx: 0, vy: 0, vz: 0, yaw: sp.yaw, pitch: 0, roll: 0, spd: 0,
     grounded: true, airT: 0, drift: 0, driftT: 0, boostT: 0, boostPow: 0, spinT: 0, spinVis: 0, stunT: 0,
-    shieldT: 0, magnetT: 0, magnetTarget: null, invulnT: 0, coins: 0, hint: sp.i, s: sp.i, lap: 0, cp: FULL,
+    shieldT: 0, magnetT: 0, magnetTarget: null, invulnT: 0, coins: 0, hint: sp.i, s: sp.i, lap: 0, cp: track.gateMask, missed: -1, offT: 0,
     finished: false, respawnT: 0, deepT: 0, safe: sp.i, safeT: 0, wrongT: 0, surf: 'road', submerged: false,
     steerVis: 0, ev: 0, speed: 0, padT: 0, ringT: 0
   };
@@ -112,6 +111,15 @@ export function stepKart(k, inp, track, dt, ctx = {}) {
     startFall(k);
     return k;
   }
+  if (nav.dist > nav.w + (k.vehicle === 'plane' ? 70 : 50)) {
+    k.offT += dt;
+    if (k.offT > 1.6) {
+      k.offT = 0;
+      k.ev |= EV.OFFTRACK;
+      startFall(k);
+      return k;
+    }
+  } else k.offT = 0;
   updateProgress(k, track, nav);
   features(k, track, nav);
   const fx = Math.sin(k.yaw);
@@ -405,26 +413,53 @@ function features(k, track, nav) {
   }
 }
 
-export function updateProgress(k, track, nav) {
-  const N = track.n;
-  const s = nav.i + nav.t;
-  const d = s - k.s;
-  if (d < -N / 2) {
-    if ((k.cp & FULL) === FULL) {
+export function gateLimit(k, nav) {
+  return nav.w + (k.vehicle === 'plane' ? 22 : 14);
+}
+
+function crossGate(k, track, g, nav) {
+  if (Math.abs(nav.lat) > gateLimit(k, nav)) {
+    k.missed = g.k;
+    k.ev |= EV.MISSED;
+    k.safe = track.idx(g.i + 1);
+    startFall(k);
+    return false;
+  }
+  if (k.missed === g.k) k.missed = -1;
+  if (g.k === 0) {
+    const others = track.gateMask & ~1;
+    if ((k.cp & others) === others) {
       k.lap++;
-      k.cp = 0;
+      k.cp = 1;
       if (k.lap > (k.maxLap || 0)) {
         k.maxLap = k.lap;
         k.ev |= EV.LAP;
       }
     }
-  } else if (d > N / 2) {
+  } else {
+    if (!(k.cp & (1 << g.k))) k.ev |= EV.GATE;
+    k.cp |= 1 << g.k;
+  }
+  return true;
+}
+
+export function updateProgress(k, track, nav) {
+  const N = track.n;
+  const s = nav.i + nav.t;
+  const prev = k.s;
+  const d = s - prev;
+  if (d > N / 2) {
     k.lap--;
-    k.cp = FULL;
+    k.cp = track.gateMask;
+  } else if (d !== 0 && d > -N / 2) {
+    if (d > 0) {
+      for (const g of track.gates) if (g.i > prev && g.i <= s && !crossGate(k, track, g, nav)) break;
+    }
+  } else if (d <= -N / 2) {
+    for (const g of track.gates) if (g.i > prev && !crossGate(k, track, g, nav)) break;
+    if (k.respawnT <= 0) for (const g of track.gates) if (g.i <= s && !crossGate(k, track, g, nav)) break;
   }
   k.s = s;
-  const sector = Math.min(SECTORS - 1, Math.floor((s / N) * SECTORS));
-  if (k.lap >= 0 && !(k.lap === 0 && k.cp === FULL)) k.cp |= 1 << sector;
 }
 
 export function startFall(k) {
@@ -448,6 +483,8 @@ export function respawn(k, track) {
   k.pitch = 0;
   k.grounded = false;
   k.hint = i;
+  k.s = i;
+  k.offT = 0;
   k.respawnT = 0;
   k.invulnT = 1.6;
   k.spinT = 0;

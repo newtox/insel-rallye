@@ -468,6 +468,10 @@ export class Game {
       a && a.sfx('fall', vol);
       L.hud && L.hud.subtitle('Zurück auf die Strecke…', 1.2);
     }
+    if (ev & EV.MISSED) {
+      L.hud && L.hud.flash('Abkürzung!', 'warn', 1.4);
+      L.hud && L.hud.subtitle('Fahr zwischen den Fahnen durch', 2);
+    } else if (ev & EV.OFFTRACK) L.hud && L.hud.subtitle('Zu weit von der Strecke', 1.6);
     if (ev & EV.RESPAWN) this.snapCamera(L);
     if (ev & EV.LAP) {
       if (k.lap >= 2) L.lapTimes.push(raceTime - L.lastLapAt);

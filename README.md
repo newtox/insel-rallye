@@ -15,6 +15,7 @@ Ein 3D-Funracer im Stil der N64-Ära: Tiere in Karts, Hovercrafts und Doppeldeck
 | Fahrzeuge | Kart, Hovercraft (gleitet übers Wasser), Flugzeug (fliegt, Ringe geben Schub) |
 | Figuren | Ruffy, Flinka, Pingo, Quaki, Bambu, Hoppla, Mauzi, Brummi – mit leicht unterschiedlichen Werten |
 | Ballons | Rot = Rakete, Blau = Turbo, Grün = Falle, Gelb = Schild, Regenbogen = Magnet. Gleiche Farbe nochmal einsammeln = Stufe 2 und 3 |
+| Checkpoints | Karierte Fahnen auf jeder Strecke. Wer außen an einer Fahne vorbeifährt oder sich zu weit von der Strecke entfernt, wird zur letzten Fahne zurückgesetzt |
 | Sonstiges | Start-Turbo, Drift mit Mini-Turbo, Münzen (bis 10, machen schneller), Punktewertung über mehrere Rennen, Chat in der Lobby, Zuschauen bei laufenden Rennen |
 
 ## Schnellstart mit Docker

@@ -308,6 +308,12 @@ class Track {
   _features() {
     const N = this.n;
     const def = this.def;
+    const G = Math.min(24, Math.max(10, Math.round(this.length / 75)));
+    this.gates = Array.from({ length: G }, (_, k) => {
+      const i = k === 0 ? 0 : this.idx((k * N) / G);
+      return { k, i, x: this.xs[i], y: this.ys[i], z: this.zs[i], w: this.ws[i], yaw: this.yawAt(i) };
+    });
+    this.gateMask = (1 << G) - 1;
     this.pads = (def.pads || []).map((p, k) => {
       const i = this.idx(p.u * N);
       const lat = p.lat * this.ws[i];

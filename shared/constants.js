@@ -36,7 +36,6 @@ export const MAX_COINS = 10;
 export const WATER_LEVEL = 0;
 export const GRAVITY = 32;
 export const COUNTDOWN_MS = 3600;
-export const SECTORS = 8;
 
 export const BOT_NAMES = ['Kiki', 'Bodo', 'Lumi', 'Tobi', 'Nala', 'Fips', 'Juna', 'Rocco', 'Mika', 'Zoe'];
 export const DIFFICULTIES = {

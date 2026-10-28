@@ -27,3 +27,32 @@ test('Flugzeug und Hovercraft kommen auf der Palmenbucht ins Ziel', () => {
     assert.ok(sim.results.every((r) => r.time != null), v);
   }
 });
+
+test('Abkürzen neben den Fahnen wird erkannt, normales Durchfahren zählt', async () => {
+  const { getTrack } = await import('../shared/trackgen.js');
+  const { createKart, updateProgress, EV } = await import('../shared/physics.js');
+  const track = getTrack('palmenbucht');
+  const g = track.gates[3];
+  const place = (k, i, lat) => {
+    const p = track.pointAt(i, lat);
+    k.x = p.x;
+    k.z = p.z;
+    k.ev = 0;
+    updateProgress(k, track, track.locate(p.x, p.z, i));
+  };
+  const ok = createKart({ id: 'a', track });
+  ok.lap = 1;
+  ok.cp = 1;
+  place(ok, g.i - 3, 0);
+  place(ok, g.i + 2, 0);
+  assert.ok(ok.cp & (1 << 3), 'Fahne auf der Strecke nicht gezählt');
+  assert.equal(ok.respawnT, 0);
+  const cheat = createKart({ id: 'b', track });
+  cheat.lap = 1;
+  cheat.cp = 1;
+  place(cheat, g.i - 3, 0);
+  place(cheat, g.i + 2, g.w + 25);
+  assert.ok(cheat.ev & EV.MISSED, 'Abkürzung nicht erkannt');
+  assert.ok(cheat.respawnT > 0);
+  assert.equal(cheat.cp & (1 << 3), 0);
+});
