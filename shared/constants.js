@@ -15,7 +15,7 @@ export const CHARACTER_IDS = CHARACTERS.map((c) => c.id);
 export const characterById = (id) => CHARACTERS.find((c) => c.id === id) || CHARACTERS[0];
 
 export const VEHICLES = {
-  car: { id: 'car', name: 'Kart', maxSpeed: 36, accel: 24, brake: 48, reverse: 12, turn: 2.2, grip: 9, driftGrip: 2.4, surf: { road: 1, curb: 0.97, grass: 0.58, sand: 0.72, snow: 0.62, rock: 0.6, ice: 0.95, water: 0.42 } },
+  car: { id: 'car', name: 'Kart', maxSpeed: 36, accel: 24, brake: 48, reverse: 12, turn: 2.2, grip: 9, driftGrip: 2.4, surf: { road: 1, curb: 0.97, grass: 0.58, sand: 0.72, snow: 0.62, rock: 0.6, ice: 0.95, water: 0.5 } },
   hover: { id: 'hover', name: 'Hovercraft', maxSpeed: 34, accel: 21, brake: 30, reverse: 10, turn: 2.5, grip: 2.7, driftGrip: 1.3, surf: { road: 1, curb: 1, grass: 0.8, sand: 0.9, snow: 0.85, rock: 0.78, ice: 1.02, water: 1.07 } },
   plane: { id: 'plane', name: 'Flugzeug', maxSpeed: 37, accel: 16, brake: 30, reverse: 0, turn: 1.75, grip: 4, driftGrip: 2, surf: {} }
 };

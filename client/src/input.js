@@ -27,10 +27,23 @@ let padNow = [];
 export function pollInput() {
   padPrev = padNow;
   padNow = [];
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const raw = navigator.getGamepads ? [...navigator.getGamepads()] : [];
+  const pads = raw.filter((p) => p && p.connected && p.buttons.length >= 4).sort((a, b) => a.index - b.index);
   for (let i = 0; i < 4; i++) {
     const p = pads[i];
-    padNow[i] = p && p.connected ? { buttons: p.buttons.map((b) => b.value > 0.5), values: p.buttons.map((b) => b.value), axes: [...p.axes] } : null;
+    if (!p) {
+      padNow[i] = null;
+      continue;
+    }
+    const buttons = [...p.buttons].map((b) => b.pressed || b.value > 0.5);
+    const axes = [...p.axes];
+    if (p.mapping !== 'standard' && axes.length > 7 && !buttons[12] && !buttons[13] && !buttons[14] && !buttons[15]) {
+      buttons[14] = axes[6] < -0.5;
+      buttons[15] = axes[6] > 0.5;
+      buttons[12] = axes[7] < -0.5;
+      buttons[13] = axes[7] > 0.5;
+    }
+    padNow[i] = { buttons, axes };
   }
 }
 
@@ -102,6 +115,15 @@ export function joinPresses(taken) {
   if (!taken.includes('kb2') && !taken.includes('kball') && anyPressed(LAYOUTS.kb2.join)) out.push('kb2');
   for (let i = 0; i < 4; i++) if (!taken.includes('pad' + i) && (padEdge(i, 0) || padEdge(i, 9))) out.push('pad' + i);
   return out;
+}
+
+export function anyPadActivity() {
+  for (let i = 0; i < 4; i++) {
+    const p = padNow[i];
+    if (!p) continue;
+    if (p.buttons.some((b, k) => b && !(padPrev[i] && padPrev[i].buttons[k]))) return true;
+  }
+  return false;
 }
 
 export function anyPadEdge(btn) {

@@ -134,7 +134,7 @@ function stepGround(k, inp, track, dt, ctx) {
   const submerged = k.vehicle === 'car' && L0.liquid && k.y < track.water - 0.4;
   k.submerged = submerged;
   k.surf = submerged ? 'water' : surf;
-  let sf = submerged ? V.surf.water : V.surf[surf] ?? 0.7;
+  let sf = submerged ? clamp(0.84 - (track.water - g0.h) * 0.2, V.surf.water, 0.84) : V.surf[surf] ?? 0.7;
   if (k.vehicle === 'hover' && surf === 'water') sf = V.surf.water;
   const coinMul = 1 + 0.009 * k.coins;
   const boostMul = k.boostT > 0 ? 1 + k.boostPow : 1;

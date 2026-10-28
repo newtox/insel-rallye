@@ -22,6 +22,7 @@ export class AudioEngine {
     } catch {}
     this.musicVol = s.music ?? 0.5;
     this.sfxVol = s.sfx ?? 0.8;
+    this.engineVol = s.engine ?? 0.5;
     this.engines = new Map();
     this.song = null;
     this.songTimer = null;
@@ -32,7 +33,7 @@ export class AudioEngine {
 
   save() {
     try {
-      localStorage.setItem('ir.audio', JSON.stringify({ music: this.musicVol, sfx: this.sfxVol }));
+      localStorage.setItem('ir.audio', JSON.stringify({ music: this.musicVol, sfx: this.sfxVol, engine: this.engineVol }));
     } catch {}
   }
 
@@ -63,6 +64,11 @@ export class AudioEngine {
   setMusic(v) {
     this.musicVol = v;
     if (this.musicBus) this.musicBus.gain.value = v * 0.35;
+    this.save();
+  }
+
+  setEngine(v) {
+    this.engineVol = v;
     this.save();
   }
 
@@ -202,10 +208,11 @@ export class AudioEngine {
     const o1 = this.ctx.createOscillator();
     const o2 = this.ctx.createOscillator();
     o1.type = vehicle === 'plane' ? 'sawtooth' : 'sawtooth';
-    o2.type = 'square';
+    o2.type = 'triangle';
     const f = this.ctx.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = 700;
+    f.frequency.value = 300;
+    f.Q.value = 0.4;
     const g = this.ctx.createGain();
     g.gain.value = 0;
     o1.connect(f);
@@ -227,8 +234,8 @@ export class AudioEngine {
     const f = base + speed * (vehicle === 'plane' ? 2.2 : 3.1) + (boosting ? 40 : 0);
     e.o1.frequency.setTargetAtTime(f, t, 0.05);
     e.o2.frequency.setTargetAtTime(f * (vehicle === 'hover' ? 1.5 : 0.5), t, 0.05);
-    e.f.frequency.setTargetAtTime(400 + speed * 30, t, 0.05);
-    e.g.gain.setTargetAtTime(vol * (0.05 + Math.min(1, speed / 40) * 0.05), t, 0.05);
+    e.f.frequency.setTargetAtTime(220 + speed * 14, t, 0.05);
+    e.g.gain.setTargetAtTime(vol * this.engineVol * (0.012 + Math.min(1, speed / 40) * 0.016), t, 0.08);
   }
 
   stopEngines() {

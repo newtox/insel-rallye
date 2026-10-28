@@ -7,7 +7,7 @@ import { Game, preloadWorld } from './game.js';
 import { LocalSession, OnlineSession } from './session.js';
 import { NetClient, api, isServed, normalizeServer } from './net.js';
 import { AudioEngine } from './audio.js';
-import { pollInput, endFrame, joinPresses, menuNav, padAxisEdge, anyPadEdge, DEVICE_NAMES } from './input.js';
+import { pollInput, endFrame, joinPresses, menuNav, padAxisEdge, anyPadEdge, anyPadActivity, DEVICE_NAMES } from './input.js';
 import { portrait } from './render/portraits.js';
 import { escapeHtml as esc } from './hud.js';
 
@@ -155,7 +155,7 @@ function showLocal() {
           <div class="slots" id="slots"></div>
         </section>
         <section class="panel">
-          <h2>Rennen</h2>
+          <h2 id="racePanel">Rennen</h2>
           <div class="tracks" id="tracks"></div>
           <div class="track-desc" id="trackDesc"></div>
           <div id="raceSettings"></div>
@@ -202,6 +202,8 @@ function renderLocalSettings() {
       audio.sfx('click');
       saveLocalSettings();
       renderLocalSettings();
+      const again = $(`#raceSettings [data-seg="${k}"] [data-v="${v}"]`);
+      if (again) again.focus({ preventScroll: true });
     });
   });
 }
@@ -240,6 +242,7 @@ function renderSlots() {
       <div><b>${ch.name}</b> <span class="muted">${ch.animal}</span></div>
       <div class="vrow">${Object.values(VEHICLES).map((v) => `<button data-slotact="veh" data-v="${v.id}" class="${s.vehicle === v.id ? 'on' : ''}">${v.name}</button>`).join('')}</div>
       <div class="row"><button class="btn small ${s.ready ? 'leaf' : 'sand'}" data-slotact="ready">${s.ready ? 'Bereit!' : 'Bereit?'}</button><button class="btn small sand" data-slotact="remove">Entfernen</button></div>
+      <div class="hint">${s.ready ? 'Rechts Strecke wählen, Bestätigen startet' : '◀ ▶ Figur · ▲ ▼ Fahrzeug · Bestätigen = bereit'}</div>
     </div>`;
   }
   el.innerHTML = html;
@@ -270,7 +273,11 @@ function slotAction(i, act, v) {
   audio.sfx('click');
   renderSlots();
   renderLocalSettings();
-  if (st.slots.length && st.slots.every((x) => x.ready)) setTimeout(() => screen === 'local' && st.slots.every((x) => x.ready) && startLocalRace(), 350);
+  if (act === 'ready' && s.ready) {
+    padFocus(true);
+    const startBtn = $('[data-act=startLocal]');
+    if (startBtn) startBtn.focus({ preventScroll: true });
+  }
 }
 
 function localTick() {
@@ -281,8 +288,21 @@ function localTick() {
     addSlot(dev);
     return;
   }
+  const panel = $('#racePanel') ? $('#racePanel').closest('.panel') : null;
   st.slots.forEach((s, i) => {
     const n = menuNav(s.device === 'kball' ? 'kb1' : s.device);
+    if (s.ready && panel) {
+      const dir = n.left ? 'left' : n.right ? 'right' : n.up ? 'up' : n.down ? 'down' : null;
+      if (dir) {
+        padFocus(true);
+        spatialMove(dir, panel);
+      } else if (n.confirm) {
+        const f = document.activeElement;
+        if (f && panel.contains(f)) f.click();
+        else $('[data-act=startLocal]').click();
+      } else if (n.back) slotAction(i, 'ready');
+      return;
+    }
     if (n.left) slotAction(i, 'prev');
     else if (n.right) slotAction(i, 'next');
     else if (n.up) slotAction(i, 'vehPrev');
@@ -869,6 +889,7 @@ function showSettings() {
     <label class="field">Dein Name (lokal und als Gast online)<input class="input" id="setName" maxlength="16" value="${esc(profile.name)}" placeholder="Spieler 1"></label>
     <label class="field">Musik<input type="range" id="setMusic" min="0" max="1" step="0.05" value="${audio.musicVol}"></label>
     <label class="field">Effekte<input type="range" id="setSfx" min="0" max="1" step="0.05" value="${audio.sfxVol}"></label>
+    <label class="field">Motoren<input type="range" id="setEngine" min="0" max="1" step="0.05" value="${audio.engineVol}"></label>
     <div class="setting-row"><span>Grafik</span>${seg('quality', [['high', 'Schön'], ['low', 'Schnell']], settings.quality)}</div>
     <div class="setting-row"><span>Flugzeug-Höhe</span>${seg('invertPlane', [['false', 'Normal'], ['true', 'Umgedreht']], String(settings.invertPlane))}</div>
     <label class="field">Server-Adresse ${isServed() ? '<span class="muted">(leer = dieser Server)</span>' : ''}<input class="input" id="setServer" value="${esc(settings.server)}" placeholder="${isServed() ? esc(location.host) : '192.168.0.20:3000'}"></label>
@@ -879,6 +900,7 @@ function showSettings() {
   });
   $('#setMusic').addEventListener('input', (e) => audio.setMusic(Number(e.target.value)));
   $('#setSfx').addEventListener('input', (e) => audio.setSfx(Number(e.target.value)));
+  $('#setEngine').addEventListener('input', (e) => audio.setEngine(Number(e.target.value)));
   $('#setServer').addEventListener('change', (e) => {
     settings.server = e.target.value.trim();
     saveSettings();
@@ -1059,13 +1081,18 @@ ui.addEventListener('click', (e) => {
   }
 });
 
-function focusables() {
-  const root = $('#modal') || $('#pause') || ui;
+function padFocus(on) {
+  document.body.classList.toggle('pad-nav', on);
+}
+addEventListener('mousemove', () => padFocus(false));
+
+function focusables(scope) {
+  const root = scope || $('#modal') || $('#pause') || ui;
   return [...root.querySelectorAll('button:not([disabled]), input, a[data-act], [tabindex="0"]')].filter((el) => el.offsetParent !== null);
 }
 
-function spatialMove(dir) {
-  const list = focusables();
+function spatialMove(dir, scope) {
+  const list = focusables(scope);
   if (!list.length) return;
   const cur = document.activeElement;
   if (!list.includes(cur)) {
@@ -1097,9 +1124,15 @@ function spatialMove(dir) {
 function menuGamepad() {
   if (screen === 'local' && !$('#modal')) return;
   if (screen === 'race' && !pauseOpen) return;
+  if (anyPadActivity()) padFocus(true);
   const dir = padAxisEdge();
   if (dir) spatialMove(dir);
-  if (anyPadEdge(0) && document.activeElement && document.activeElement !== document.body) document.activeElement.click();
+  if (anyPadEdge(0)) {
+    const f = document.activeElement;
+    const list = focusables();
+    if (f && list.includes(f)) f.click();
+    else if (list.length) list[0].focus();
+  }
   if (anyPadEdge(1)) {
     const back = ($('#modal') || $('#pause') || ui).querySelector('[data-back]');
     if ($('#pause')) closePause();

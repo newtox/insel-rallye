@@ -206,3 +206,5 @@ table.results .num { text-align: right; font-variant-numeric: tabular-nums; }
   .hud-msg, .hud-item.pop, .btn, #toast { transition: none !important; animation: none !important; }
 }
 a { color: var(--coral-d); font-weight: 900; }
+body.pad-nav .btn:focus, body.pad-nav .track-card:focus, body.pad-nav .char:focus, body.pad-nav .veh:focus, body.pad-nav .seg button:focus, body.pad-nav input:focus, body.pad-nav a:focus { outline: 5px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 9px var(--coral); position: relative; z-index: 2; }
+body.pad-nav .seg button:focus { outline-offset: -5px; box-shadow: none; outline-color: var(--coral); }
