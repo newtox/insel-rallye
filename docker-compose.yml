@@ -1,0 +1,15 @@
+services:
+  insel-rallye:
+    build: .
+    image: insel-rallye:latest
+    container_name: insel-rallye
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      SERVER_NAME: "Insel Rallye"
+      REGISTRATION: "open"
+      REQUIRE_ACCOUNT: "false"
+      TRUST_PROXY: "true"
+    volumes:
+      - /docker_volumes/insel-rallye:/data

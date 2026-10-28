@@ -1,0 +1,25 @@
+{
+  "name": "insel-rallye",
+  "version": "1.0.0",
+  "description": "3D-Funracer im Stil der N64-Ära – Online-Multiplayer mit Raum-Codes und Accounts, lokaler Splitscreen und Offline-Version",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "admin": "node --disable-warning=ExperimentalWarning server/admin.js",
+    "dev": "node build.mjs && node --disable-warning=ExperimentalWarning server/index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.186.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "private": true
+}

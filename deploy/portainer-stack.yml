@@ -1,0 +1,14 @@
+services:
+  insel-rallye:
+    image: ghcr.io/newtox/insel-rallye:latest
+    container_name: insel-rallye
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3000"
+    environment:
+      SERVER_NAME: "Insel Rallye"
+      REGISTRATION: "open"
+      REQUIRE_ACCOUNT: "false"
+      TRUST_PROXY: "true"
+    volumes:
+      - /docker_volumes/insel-rallye:/data
