@@ -16,7 +16,7 @@ export const LAYOUTS = {
 };
 LAYOUTS.kball = Object.fromEntries(Object.keys(LAYOUTS.kb1).map((k) => [k, [...LAYOUTS.kb1[k], ...LAYOUTS.kb2[k]]]));
 
-export const DEVICE_NAMES = { kb1: 'Tastatur (WASD)', kb2: 'Tastatur (Pfeile)', kball: 'Tastatur', pad0: 'Controller 1', pad1: 'Controller 2', pad2: 'Controller 3', pad3: 'Controller 4' };
+export const DEVICE_NAMES = { any: 'Tastatur oder Controller', kb1: 'Tastatur (WASD)', kb2: 'Tastatur (Pfeile)', kball: 'Tastatur', pad0: 'Controller 1', pad1: 'Controller 2', pad2: 'Controller 3', pad3: 'Controller 4' };
 
 const anyKey = (list) => list.some((c) => keys.has(c));
 const anyPressed = (list) => list.some((c) => pressed.has(c));
@@ -61,6 +61,14 @@ function padEdge(i, b) {
 const dead = (v) => (Math.abs(v) < 0.18 ? 0 : (v - Math.sign(v) * 0.18) / 0.82);
 
 export function readDevice(dev, opts = {}) {
+  if (dev === 'any') {
+    const list = ['kball', 'pad0', 'pad1', 'pad2', 'pad3'].map((d) => readDevice(d, opts));
+    const pick = (k) => list.reduce((a, r) => (Math.abs(r[k]) > Math.abs(a) ? r[k] : a), 0);
+    return {
+      gas: pick('gas'), brake: pick('brake'), steer: pick('steer'), pitch: pick('pitch'),
+      drift: list.some((r) => r.drift), item: list.some((r) => r.item), pause: list.some((r) => r.pause)
+    };
+  }
   const inv = opts.invertPlane ? -1 : 1;
   if (dev.startsWith('kb')) {
     const L = LAYOUTS[dev] || LAYOUTS.kball;

@@ -325,7 +325,7 @@ function startLocalRace() {
   for (let i = 0; i < st.cpus; i++) players.push({ id: 'cpu' + i, name: names[i], character: pool[i % pool.length] || CHARACTERS[i].id, vehicle: def.defaultVehicle, bot: true });
   const session = new LocalSession({ trackId: st.trackId, laps: st.laps, items: st.items, difficulty: st.difficulty, players });
   st.slots.forEach((s) => (s.ready = false));
-  startGame(session, st.slots.map((s) => ({ device: s.device })), 'local');
+  startGame(session, st.slots.map((s) => ({ device: st.slots.length === 1 ? 'any' : s.device })), 'local');
 }
 
 function startGame(session, locals, mode) {
@@ -532,7 +532,7 @@ function bindNet(n) {
   });
   n.on('race', (m) => {
     const session = new OnlineSession(n, m.info, myId, !!m.spectate);
-    startGame(session, [{ device: 'kball' }], 'online');
+    startGame(session, [{ device: 'any' }], 'online');
     if (m.spectate) toast('Rennen läuft – du schaust zu und bist beim nächsten dabei.');
   });
   n.on('disconnect', () => {
